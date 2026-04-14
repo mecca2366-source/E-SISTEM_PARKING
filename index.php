@@ -123,9 +123,9 @@
     </div>
 
     <div id="login-wrapper">
-        <div class="login-card">
+        <div class="login-card">s
             <div class="logo-space"></div>
-            <h2>HALAMAN LOGIN</h2>
+            <h2>HALAMAN LOGIN PARKIR</h2>
             
             <form action="login.php" method="POST">
                 <div class="form-group">
