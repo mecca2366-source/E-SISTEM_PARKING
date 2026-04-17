@@ -5,32 +5,35 @@ include '../koneksi.php';
 // TOTAL HARI INI
 $q_total = mysqli_query($koneksi, "
     SELECT COUNT(*) as total 
-    FROM transaksi 
+    FROM t_parkir 
     WHERE DATE(waktu_masuk)=CURDATE()
 ");
 $total = mysqli_fetch_assoc($q_total);
 
-// MASIH PARKIR
+// MASIH PARKIR (belum keluar)
 $q_parkir = mysqli_query($koneksi, "
     SELECT COUNT(*) as parkir 
-    FROM transaksi 
-    WHERE status='masuk'
+    FROM t_parkir 
+    WHERE waktu_keluar IS NULL
 ");
 $parkir = mysqli_fetch_assoc($q_parkir);
 
 // PENDAPATAN
 $q_pendapatan = mysqli_query($koneksi, "
-    SELECT SUM(tarif) as total 
-    FROM transaksi 
+    SELECT SUM(total_bayar) as total 
+    FROM t_parkir 
     WHERE DATE(waktu_masuk)=CURDATE()
 ");
 $pendapatan = mysqli_fetch_assoc($q_pendapatan);
 $total_pendapatan = $pendapatan['total'] ?? 0;
 
-// DATA TABEL
+// DATA TABEL (JOIN jenis kendaraan)
 $data = mysqli_query($koneksi, "
-    SELECT * FROM transaksi 
-    ORDER BY id_transaksi DESC
+    SELECT p.*, j.nama_jenis 
+    FROM t_parkir p
+    LEFT JOIN t_jenis_kendaraan j 
+    ON p.id_jenis = j.id_jenis
+    ORDER BY p.id_parkir DESC
 ");
 ?>
 
@@ -46,7 +49,6 @@ $data = mysqli_query($koneksi, "
         background: #f5f5f5;
     }
 
-    /* CARDS */
     .cards {
         display: flex;
         gap: 20px;
@@ -67,7 +69,6 @@ $data = mysqli_query($koneksi, "
         color: orange;
     }
 
-    /* TABLE */
     .table-container {
         padding: 20px;
     }
@@ -146,16 +147,16 @@ $data = mysqli_query($koneksi, "
         <?php if(mysqli_num_rows($data) > 0){ ?>
             <?php while($row = mysqli_fetch_assoc($data)){ ?>
             <tr>
-                <td><?= $row['id_transaksi'] ?></td>
+                <td><?= $row['id_parkir'] ?></td>
                 <td><?= $row['kode_tiket'] ?></td>
                 <td><?= $row['plat_nomor'] ?></td>
-                <td><?= $row['jenis_kendaraan'] ?></td>
+                <td><?= $row['nama_jenis'] ?></td>
                 <td>
                     <?= $row['waktu_masuk'] ?> 
                     <?= $row['waktu_keluar'] ? "- ".$row['waktu_keluar'] : "" ?>
                 </td>
                 <td>
-                    <?php if($row['status']=="masuk"){ ?>
+                    <?php if($row['waktu_keluar'] == NULL){ ?>
                         <span class="status-masuk">Parkir</span>
                     <?php } else { ?>
                         <span class="status-keluar">Keluar</span>
