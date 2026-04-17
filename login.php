@@ -23,7 +23,7 @@ if($cek > 0){
 
     if($d['role'] == 1){
         header("location:admin/index.php");
-    }elseif($d['status'] == 2){
+    }elseif($d['role'] == 2){
         header("location:petugas/index.php");
     }
 
