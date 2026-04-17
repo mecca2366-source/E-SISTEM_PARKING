@@ -1,45 +1,178 @@
-<div class="top-header" style="background: linear-gradient(90deg, #F2EDC2 0%, #FFFFFF 100%); width: 100%; height: 80px; display: flex; align-items: center; padding: 0 30px; box-sizing: border-box;">
-    <h1 style="margin: 0; font-size: 2rem; font-weight: bold; color: #000;">Dashboard Admin</h1>
-    <img src="../assets/logo.png" style="height: 60px; margin-left: auto;">
-</div>
+<?php 
+session_start();
+include '../koneksi.php';
 
-<div class="content-body" style="padding: 30px; background: transparent;">
-    
-    <div class="cards-container" style="display: flex; gap: 20px; margin-bottom: 50px;">
-        
-        <div class="card" style="flex: 1; background: #F2EDC2; border-radius: 20px; padding: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-bottom: 15px solid #4C5C2D; position: relative;">
-            <p style="margin: 0; font-weight: bold;">Total Kendaraan<br>Hari Ini</p>
-            <h2 style="font-size: 4rem; text-align: center; margin: 10px 0; color: #D4A017;"><?= $total_hari_ini ?></h2>
-            <span style="position: absolute; top: 20px; right: 20px; font-size: 1.5rem;">🏍️</span>
-        </div>
+// TOTAL HARI INI
+$q_total = mysqli_query($koneksi, "
+    SELECT COUNT(*) as total 
+    FROM transaksi 
+    WHERE DATE(waktu_masuk)=CURDATE()
+");
+$total = mysqli_fetch_assoc($q_total);
 
-        <div class="card" style="flex: 1; background: #F2EDC2; border-radius: 20px; padding: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-bottom: 15px solid #4C5C2D; position: relative;">
-            <p style="margin: 0; font-weight: bold;">Kendaraan Masih<br>Parkir</p>
-            <h2 style="font-size: 4rem; text-align: center; margin: 10px 0; color: #D4A017;"><?= $masih_parkir ?></h2>
-            <span style="position: absolute; top: 20px; right: 20px; font-size: 1.5rem;">🛵</span>
-        </div>
+// MASIH PARKIR
+$q_parkir = mysqli_query($koneksi, "
+    SELECT COUNT(*) as parkir 
+    FROM transaksi 
+    WHERE status='masuk'
+");
+$parkir = mysqli_fetch_assoc($q_parkir);
 
-        <div class="card" style="flex: 1; background: #F2EDC2; border-radius: 20px; padding: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-bottom: 15px solid #4C5C2D; position: relative;">
-            <p style="margin: 0; font-weight: bold;">Total Pendapatan</p>
-            <h2 style="font-size: 2.5rem; text-align: center; margin: 25px 0; color: #D4A017;">Rp <?= number_format($pendapatan, 0, ',', '.') ?></h2>
-            <span style="position: absolute; top: 20px; right: 20px; font-size: 1.5rem;">💼</span>
-        </div>
+// PENDAPATAN
+$q_pendapatan = mysqli_query($koneksi, "
+    SELECT SUM(tarif) as total 
+    FROM transaksi 
+    WHERE DATE(waktu_masuk)=CURDATE()
+");
+$pendapatan = mysqli_fetch_assoc($q_pendapatan);
+$total_pendapatan = $pendapatan['total'] ?? 0;
 
+// DATA TABEL
+$data = mysqli_query($koneksi, "
+    SELECT * FROM transaksi 
+    ORDER BY id_transaksi DESC
+");
+?>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin - Dashboard</title>
+
+    <style>
+    body {
+        margin: 0;
+        font-family: Arial;
+        background: #f5f5f5;
+    }
+
+    /* CARDS */
+    .cards {
+        display: flex;
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .card {
+        flex: 1;
+        background: #F2EDC2;
+        padding: 20px;
+        border-radius: 15px;
+        text-align: center;
+        box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+    }
+
+    .card .angka {
+        font-size: 30px;
+        color: orange;
+    }
+
+    /* TABLE */
+    .table-container {
+        padding: 20px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th {
+        background: #346739;
+        color: white;
+        padding: 10px;
+    }
+
+    td {
+        padding: 10px;
+        text-align: center;
+    }
+
+    tr:nth-child(even) {
+        background: #eee;
+    }
+
+    .status-masuk {
+        background: orange;
+        padding: 5px 10px;
+        border-radius: 10px;
+    }
+
+    .status-keluar {
+        background: red;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 10px;
+    }
+    </style>
+</head>
+
+<body>
+
+<?php include 'header.php'; ?>
+
+<!-- CARDS -->
+<div class="cards">
+    <div class="card">
+        <h3>Total Kendaraan Hari Ini</h3>
+        <div class="angka"><?= $total['total'] ?></div>
     </div>
 
-    <h3 style="margin-bottom: 15px;">Riwayat Transaksi Hari Ini</h3>
-    <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden;">
-        <thead style="background: #4C5C2D; color: white;">
+    <div class="card">
+        <h3>Kendaraan Masih Parkir</h3>
+        <div class="angka"><?= $parkir['parkir'] ?></div>
+    </div>
+
+    <div class="card">
+        <h3>Total Pendapatan</h3>
+        <div class="angka">Rp <?= number_format($total_pendapatan,0,',','.') ?></div>
+    </div>
+</div>
+
+<!-- TABLE -->
+<div class="table-container">
+    <h3>Riwayat Transaksi</h3>
+
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Kode Tiket</th>
+            <th>Plat</th>
+            <th>Jenis</th>
+            <th>Waktu</th>
+            <th>Status</th>
+        </tr>
+
+        <?php if(mysqli_num_rows($data) > 0){ ?>
+            <?php while($row = mysqli_fetch_assoc($data)){ ?>
             <tr>
-                <th style="padding: 15px;">ID Transaksi</th>
-                <th>Kode Tiket</th>
-                <th>Plat Nomor</th>
-                <th>Jenis Kendaraan</th>
-                <th>Waktu</th>
-                <th>Status</th>
+                <td><?= $row['id_transaksi'] ?></td>
+                <td><?= $row['kode_tiket'] ?></td>
+                <td><?= $row['plat_nomor'] ?></td>
+                <td><?= $row['jenis_kendaraan'] ?></td>
+                <td>
+                    <?= $row['waktu_masuk'] ?> 
+                    <?= $row['waktu_keluar'] ? "- ".$row['waktu_keluar'] : "" ?>
+                </td>
+                <td>
+                    <?php if($row['status']=="masuk"){ ?>
+                        <span class="status-masuk">Parkir</span>
+                    <?php } else { ?>
+                        <span class="status-keluar">Keluar</span>
+                    <?php } ?>
+                </td>
             </tr>
-        </thead>
-        <tbody style="text-align: center;">
-            </tbody>
+            <?php } ?>
+        <?php } else { ?>
+            <tr>
+                <td colspan="6">Belum ada data transaksi</td>
+            </tr>
+        <?php } ?>
+
     </table>
 </div>
+
+</div> <!-- penutup main-content dari header -->
+
+</body>
+</html>
